@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Selección de Objetos</title>
+</head>
+<body>
+    <h2>Ingrese la cantidad requerida de objetos</h2>
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form method="post" id="objects-form">
+        <table id="objects-table" border="1" cellpadding="5">
+            <thead>
+                <tr>
+                    <th>Objeto</th>
+                    <th>Cantidad</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="objects-tbody">
+            </tbody>
+        </table>
+        <button type="button" onclick="addRow()">Agregar Objeto</button>
+        <br><br>
+        <!-- Se enviará un campo oculto con el JSON generado -->
+        <input type="hidden" name="objects" id="objects-input">
+        <button type="submit">Iniciar Verificación</button>
+    </form>
+    <script>
+        // Se utiliza object_options pasados desde el backend (model.names)
+        const objectOptions = JSON.parse('{{ object_options | tojson | safe }}');
+        
+        function addRow() {
+            const tbody = document.getElementById('objects-tbody');
+            const tr = document.createElement('tr');
+
+            // Dropdown para seleccionar el objeto
+            const tdSelect = document.createElement('td');
+            const select = document.createElement('select');
+            select.className = "object-select";
+            for (const [id, name] of Object.entries(objectOptions)) {
+                const option = document.createElement('option');
+                option.value = name;
+                option.text = name;
+                select.appendChild(option);
+            }
+            tdSelect.appendChild(select);
+            tr.appendChild(tdSelect);
+
+            // Input para la cantidad
+            const tdQuantity = document.createElement('td');
+            const inputQty = document.createElement('input');
+            inputQty.type = "number";
+            inputQty.className = "object-qty";
+            inputQty.min = "1";
+            inputQty.value = "1";
+            tdQuantity.appendChild(inputQty);
+            tr.appendChild(tdQuantity);
+
+            // Botón para eliminar la fila
+            const tdActions = document.createElement('td');
+            const btnRemove = document.createElement('button');
+            btnRemove.type = "button";
+            btnRemove.textContent = "Eliminar";
+            btnRemove.onclick = function() { tr.remove(); };
+            tdActions.appendChild(btnRemove);
+            tr.appendChild(tdActions);
+
+            tbody.appendChild(tr);
+        }
+
+        // Recoger todos los datos y formar el JSON al enviar el formulario
+        document.getElementById('objects-form').addEventListener('submit', function(e) {
+            const rows = document.querySelectorAll('#objects-tbody tr');
+            const result = {};
+            rows.forEach(row => {
+                const select = row.querySelector('.object-select');
+                const qty = row.querySelector('.object-qty');
+                const objName = select.value;
+                const quantity = parseInt(qty.value);
+                if(result[objName]) {
+                    result[objName] += quantity;
+                } else {
+                    result[objName] = quantity;
+                }
+            });
+            document.getElementById('objects-input').value = JSON.stringify(result);
+        });
+    </script>
+</body>
+</html>

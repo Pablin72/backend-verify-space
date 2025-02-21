@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Verificación de Objetos</title>
+</head>
+<body>
+    <h2>Verificando Objetos</h2>
+    <p>Requerimientos: {{ required_counts }}</p>
+    <img src="{{ url_for('video_bp.video_feed') }}?verify=1" width="640" height="480" alt="Feed de video">
+    <br><br>
+    <a href="{{ url_for('object_bp.object_form') }}">Volver</a>
+    <script>
+        // Variable para evitar que el popup se muestre múltiples veces
+        let popupShown = false;
+        // Revisar el estado cada 2 segundos
+        const intervalId = setInterval(function() {
+            fetch("{{ url_for('object_bp.verification_status') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.verification_complete && !popupShown) {
+                        // Obtener la ubicación usando la API Geolocation
+                        navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                const lat = position.coords.latitude;
+                                const lon = position.coords.longitude;
+                                alert(`Proceso de verificación completado.\nUbicación: Latitud: ${lat}, Longitud: ${lon}`);
+                            },
+                            function(error) {
+                                alert("Proceso de verificación completado pero no se pudo obtener la ubicación.");
+                            }
+                        );
+                        popupShown = true;
+                        clearInterval(intervalId);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }, 2000);
+    </script>
+</body>
+</html>
